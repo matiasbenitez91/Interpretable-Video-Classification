@@ -9,7 +9,7 @@ def extract_features(img_data, model):
     img_data = preprocess_input(img_data)
     feature = model.predict(img_data)
     feature=feature.reshape(feature.shape[0], -1)
-    return np.mean(feature, axis=0)
+    return feature
 def get_average_pooling(data, model):
     return np.array([extract_features(x, model)  for x in data])
 
