@@ -19,7 +19,7 @@ import gc
 
 
 input_dir='action_youtube_naudio/'
-model = ResNet50(weights='imagenet', include_top=False, input_shape=(240,320,3))
+model = ResNet50(weights='imagenet', include_top=False, input_shape=(224,224,3), pooling='max')
 
 # In[3]:
 
@@ -45,7 +45,7 @@ def get_frames(input_loc, crop_num):
     cap = cv2.VideoCapture(input_loc)
     ret=True
     result=[]
-    shape=(240,320,3)
+    shape=(224,224,3)
     miss=False
     print ('Converting video ....')
     while(ret):
@@ -60,7 +60,7 @@ def get_frames(input_loc, crop_num):
         if ret==False:
             break
         
-        if frame.shape!=shape:
+        if (frame.shape[0]<shape[0])&(frame.shape[1]<shape[1]):
             miss=True
             break
         result.append(frame)
@@ -80,7 +80,7 @@ def get_frames(input_loc, crop_num):
     for x in range(0,crop_num, int(crop_num/10)):
         res.append(result[x][:224,:224,:])
     collect=gc.collect()
-    return res, miss
+    return np.array(res), miss
 
 
 ## Function that creates a sequences of images for each video in a directory
@@ -113,19 +113,21 @@ for i in os.listdir(input_dir):
                 check=True
                 print (f)
                 cur,check=get_frames(root+"/"+f, 40)
-                cur=get_average_pooling(np.array(cur), model)#to get a feature vector for ever image, use get_features() and loop over cur
+                if type(cur)==type(None): ## I added this
+                    continue
+                cur=extract_features(cur, model)#to get a feature vector for ever image, use get_features() and loop over cur
                 if check==False:
                     data.append(cur)
                     output.append(labels[i])
                 if len(data)>700:
                     print ('saving count: ...'+str(count))
-                    X_train, X_test, y_train, y_test = train_test_split(np.array(data), np.array(output), test_size=0.15, random_state=42)
-                    pickle.dump([X_train, y_train], open('train_'+str(count)+'.p', 'wb'))
-                    pickle.dump([X_test, y_test], open('test_'+str(count)+'.p', 'wb'))
+                    #X_train, X_test, y_train, y_test = train_test_split(np.array(data), np.array(output), test_size=0.15, random_state=42)
+                    pickle.dump([data, output], open('data_'+str(count)+'.p', 'wb'))
+                    #pickle.dump([X_test, y_test], open('test_'+str(count)+'.p', 'wb'))
                     count+=1
                     output=[]
                     data=[]
                     collection=gc.collect()
-X_train, X_test, y_train, y_test = train_test_split(np.array(data), np.array(output), test_size=0.15, random_state=42)
-pickle.dump([X_train, y_train], open('train_'+str(count)+'.p', 'wb'))
-pickle.dump([X_test, y_test], open('test_'+str(count)+'.p', 'wb'))         
+#X_train, X_test, y_train, y_test = train_test_split(np.array(data), np.array(output), test_size=0.15, random_state=42)
+pickle.dump([data, output], open('data_'+str(count)+'.p', 'wb'))
+#pickle.dump([X_test, y_test], open('test_'+str(count)+'.p', 'wb'))         
