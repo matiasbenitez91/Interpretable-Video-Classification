@@ -4,6 +4,7 @@
 # In[1]:
 
 from keras.applications.resnet50 import ResNet50
+from keras.applications.vgg16 import VGG16
 from avg_pooling import *
 import imageio
 import pickle
@@ -19,6 +20,7 @@ import gc
 
 
 input_dir='action_youtube_naudio/'
+## model = VGG16(weights='imagenet', include_top=False, input_shape=(224,224,3), pooling='max')
 model = ResNet50(weights='imagenet', include_top=False, input_shape=(224,224,3), pooling='max')
 
 # In[3]:
@@ -60,7 +62,7 @@ def get_frames(input_loc, crop_num):
         if ret==False:
             break
         
-        if (frame.shape[0]<shape[0])&(frame.shape[1]<shape[1]):
+        if (frame.shape[0]<shape[0]) or (frame.shape[1]<shape[1]):
             miss=True
             break
         result.append(frame)
